@@ -1,0 +1,65 @@
+- name: Install Apache2
+  apt:
+    pkg: apache2
+    state: present
+
+- name: Dispatcher module download
+  get_url:
+    url: https://touch.epm-esp.projects.epam.com/static-files/aem/dispatcher/dispatcher-4.3.3-apache-2.4.so
+    dest: /usr/lib/apache2/modules/mod_dispatcher.so
+    mode: '0644'
+
+- name: Create dispatcher config
+  template:
+    src: "dispatcher.any.j2"
+    dest: "/etc/apache2/dispatcher.any"
+  notify:
+    - restart apache2
+
+- name: Create dispatcher module config
+  template:
+    src: "dispatcher.conf.j2"
+    dest: "/etc/apache2/mods-available/dispatcher.conf"
+  notify:
+    - restart apache2
+
+- name: Create dispatcher module load config
+  template:
+    src: "dispatcher.load.j2"
+    dest: "/etc/apache2/mods-available/dispatcher.load"
+  notify:
+    - restart apache2
+
+- name: Create vhost config
+  template:
+    src: "aem-vhost.conf.j2"
+    dest: "/etc/apache2/sites-available/aem-vhost.conf"
+  notify:
+    - restart apache2
+
+- name: Disable default site
+  command: a2dissite 000-default
+  args:
+    removes: /etc/apache2/sites-enabled/000-default.conf
+  notify:
+    - restart apache2
+
+- name: Enabele AEM site
+  command: a2ensite aem-vhost
+  args:
+    creates: /etc/apache2/sites-enabled/aem-vhost.conf
+  notify:
+    - restart apache2
+
+- name: Enabling module
+  apache2_module:
+    state: present
+    name: dispatcher
+  notify:
+    - restart apache2
+
+- name: Make sure a service unit is enabled and running
+  systemd:
+    state: started
+    name: apache2
+    daemon_reload: true

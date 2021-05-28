@@ -1,0 +1,16 @@
+[Unit]
+Description=AEM Publish
+After=network.target
+ 
+[Service]
+Type=forking
+User={{ aem_user }}
+WorkingDirectory={{ aem_path }}/crx-quickstart
+ExecStart={{ aem_path }}/crx-quickstart/bin/start
+ExecStop={{ aem_path }}/crx-quickstart/bin/stop
+PIDFile={{ aem_path }}/crx-quickstart/conf/cq.pid
+RestartSec=60
+KillSignal=SIGINT
+ 
+[Install]
+WantedBy=multi-user.target

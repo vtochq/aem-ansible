@@ -1,0 +1,7 @@
+---
+- hosts: aem
+  become: yes
+  roles:
+    - author
+    - publish
+    - dispatcher

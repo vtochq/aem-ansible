@@ -1,0 +1,4 @@
+aem_path: '/opt/aem_test/publish'
+aem_user: 'aem'
+aem_group: 'aem'
+aem_dist_url: 'https://fake_url'

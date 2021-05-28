@@ -1,0 +1,71 @@
+- name: Create AEM group
+  group:
+    name: "{{ aem_group }}"
+    state: present
+
+- name: Create AEM user
+  user:
+    name: "{{ aem_user }}"
+    group: "{{ aem_group }}"
+    shell: "/bin/false"
+    state: present
+
+- name: Install java
+  apt:
+    pkg: openjdk-8-jdk-headless
+    state: present
+
+- name: Create AEM Author root dir "{{ aem_path }}" 
+  file:
+    path: "{{ aem_path }}"
+    state: directory
+    mode: '0755'
+    owner: "{{ aem_user }}"
+    group: "{{ aem_group }}"
+
+- name: AEM download
+  get_url:
+    url: "{{ aem_dist_url }}/6.5/aem.jar"
+    dest: "{{ aem_path }}/aem-author-p4502.jar"
+    mode: '0644'
+    owner: "{{ aem_user }}"
+    group: "{{ aem_group }}"
+
+- name: AEM license download
+  get_url:
+    url: "{{ aem_dist_url }}/licenses/6.5/license.properties"
+    dest: "{{ aem_path }}"
+    mode: '0644'
+    owner: "{{ aem_user }}"
+    group: "{{ aem_group }}"
+
+- name: AEM unpack
+  command: java -jar "{{ aem_path }}/aem-author-p4502.jar" -unpack
+  args:
+    chdir: "{{ aem_path }}"
+
+- name: Change dir owner
+  file:
+    path: "{{ aem_path }}"
+    state: directory
+    recurse: yes
+    owner: "{{ aem_user }}"
+    group: "{{ aem_group }}"
+
+- name: Create systemd config
+  template:
+    src: "aem-author.service.j2"
+    dest: "/etc/systemd/system/aem-author.service"
+
+- name: Enable AEM author service
+  systemd:
+    name: aem-author
+    enabled: yes
+    masked: no
+
+- name: Make sure a service unit is running
+  systemd:
+    state: started
+    name: aem-author
+    daemon_reload: true
+
